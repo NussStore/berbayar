@@ -2,80 +2,70 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Watch Ad</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    height:100vh; background:#0d0d0d; color:#eee;
-    display:flex; flex-direction:column; justify-content:space-between;
-    font-family:Arial, sans-serif;
-  }
-  .center {
-    flex:1; display:flex; justify-content:center; align-items:center;
-    flex-direction:column; padding:20px;
-  }
+body {
+  background: #0b0c10;
+  color: white;
+  font-family: sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  text-align: center;
+}
+.loader {
+  border: 5px solid rgba(255,255,255,0.1);
+  border-top: 5px solid white;
+  border-radius: 50%;
+  width: 45px;
+  height: 45px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
 
-  /* Loading Animation */
-  .loader {
-    border:5px solid #222;
-    border-top:5px solid #00e676;
-    border-radius:50%;
-    width:60px; height:60px;
-    animation:spin 1s linear infinite;
-    margin-bottom:18px;
-  }
-  @keyframes spin { 100% { transform: rotate(360deg); } }
+button {
+  background: #1f2833;
+  padding: 10px 20px;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  margin-top: 10px;
+  font-size: 16px;
+}
 
-  .btn {
-    width:92%; padding:15px; margin:15px auto;
-    text-align:center; background:#1f1f1f; color:#fff; border:none;
-    border-radius:10px; font-size:18px; cursor:pointer;
-  }
-  .btn:active { opacity:0.7; }
-  #backBtn { display:none; background:#00c853; }
 </style>
+
+<script src="https://js.adsgram.ai/js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 
 <body>
 
-<div class="center">
-  <div id="loader" class="loader"></div>
-  <div id="msg">Menyiapkan iklan...</div>
+<div id="loading">
+  <div class="loader"></div>
+  <p>Sedang menampilkan iklan...</p>
 </div>
 
-<button id="backBtn" class="btn">✅ Kembali ke Bot</button>
-
 <script>
-const tg = window.Telegram.WebApp;
-tg.expand();
-
-const ad = window.Adsgram.init({ blockId: "int-16643" });
-
-const loader = document.getElementById("loader");
-const msg = document.getElementById("msg");
-const backBtn = document.getElementById("backBtn");
-
-// Anti-skip: iklan langsung jalan, tidak ada tombol skip
-function showAd() {
-  ad.show().then(() => {
-      msg.innerText = "Iklan selesai ✅";
-      loader.style.display = "none";
-      backBtn.style.display = "block";
-  }).catch(() => {
-      msg.innerText = "Iklan gagal atau ditutup ❌";
-      loader.style.display = "none";
-      backBtn.style.display = "block"; // tetap boleh kembali, tidak ada reward
-  });
-}
-
-// Delay sedikit untuk UX
-setTimeout(showAd, 600);
-
-backBtn.onclick = () => tg.close();
+window.onload = function () {
+  setTimeout(() => {
+    telegramAds.showInterstitialAd({
+      blockId: "int-16643",
+      onRewarded() {
+        Telegram.WebApp.close();
+      },
+      onError(err) {
+        console.log(err);
+        Telegram.WebApp.close();
+      }
+    });
+  }, 1000);
+};
 </script>
 
 </body>
