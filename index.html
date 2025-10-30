@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AdsGram Fullscreen</title>
+
+<!-- Styling fullscreen -->
+<style>
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+    font-family: sans-serif;
+  }
+  #root {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-align: center;
+    font-size: 24px;
+  }
+</style>
+
+</head>
+<body>
+
+<div id="root">Loading...</div>
+
+<!-- React & React DOM CDN -->
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+
+<!-- ES Module runner -->
+<script type="module">
+  import { initAdsgram } from "https://esm.run/@adsgram/react";
+
+  const BLOCK_ID = "YOUR_BLOCK_ID_HERE"; // ⬅️ GANTI
+
+  const { useEffect, useState } = React;
+
+  function App() {
+    const [ad, setAd] = useState(null);
+    const [status, setStatus] = useState("Tap anywhere to show ads");
+
+    useEffect(() => {
+      const controller = initAdsgram({ blockId: BLOCK_ID });
+      setAd(controller);
+      setStatus("Ready — tap to show ad");
+    }, []);
+
+    const showAd = () => {
+      if (!ad) return;
+      setStatus("Showing ad...");
+
+      ad.show()
+        .then(() => setStatus("Ad finished — rewarded"))
+        .catch(() => setStatus("Ad closed / failed"));
+    };
+
+    return React.createElement(
+      "div",
+      { id: "screen", onClick: showAd },
+      status
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById("root")).render(
+    React.createElement(App)
+  );
+</script>
+
+</body>
+</html>
