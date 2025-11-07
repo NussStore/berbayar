@@ -1,81 +1,219 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html lang="id">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Tonton Iklan</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tonton Iklan — Demo AdsGram</title>
 
-<!-- Telegram Mini App -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- AdsGram SDK -->
+  <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
 
-<!-- AdsGram -->
-<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+  <style>
+    /* Reset sederhana */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html,body { height: 100%; font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; background: linear-gradient(135deg,#0f172a 0%, #071233 100%); color: #fff; }
 
-<style>
-  body {
-    margin: 0;
-    background: #0b0b0f;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    font-family: Arial, sans-serif;
-    color: #fff;
-  }
+    /* Center container */
+    .wrap {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
 
-  #container {
-    text-align: center;
-  }
+    .card {
+      width: 100%;
+      max-width: 520px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
+      border-radius: 18px;
+      padding: 32px;
+      box-shadow: 0 10px 30px rgba(2,6,23,0.6);
+      text-align: center;
+      backdrop-filter: blur(6px);
+    }
 
-  .loader {
-    border: 4px solid #222;
-    border-top: 4px solid #fff;
-    border-radius: 50%;
-    width: 55px;
-    height: 55px;
-    animation: spin 1s linear infinite;
-    margin: 0 auto 15px auto;
-  }
+    h1 { font-size: 20px; margin-bottom: 18px; letter-spacing: 0.6px; color: #e6eef8; }
+    p.sub { margin-bottom: 22px; color: #cfe3ff; opacity: 0.85; }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+    /* Button modern */
+    .btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 14px 28px;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: 0.6px;
+      cursor: pointer;
+      border: none;
+      background: linear-gradient(90deg,#FF8A00,#FF4D00);
+      color: #081024;
+      font-size: 16px;
+      transition: transform .12s ease, box-shadow .12s ease, opacity .12s;
+      box-shadow: 0 8px 20px rgba(255,77,0,0.18);
+      user-select: none;
+    }
 
-  .text {
-    font-size: 16px;
-    opacity: .8;
-  }
-</style>
+    .btn:active { transform: translateY(2px); }
+    .btn[disabled] { opacity: 0.7; cursor: default; transform: none; }
+
+    /* small spinner */
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.4);
+      border-top-color: rgba(255,255,255,0.95);
+      animation: spin 0.9s linear infinite;
+      display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status {
+      margin-top: 18px;
+      font-size: 14px;
+      color: #cfe3ff;
+      min-height: 20px;
+    }
+
+    /* subtle pulse when button pressed */
+    .pulse {
+      animation: pulse 1s ease;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 6px 18px rgba(255,77,0,0.18); transform: scale(1); }
+      50% { box-shadow: 0 18px 40px rgba(255,77,0,0.25); transform: scale(1.02); }
+      100% { box-shadow: 0 6px 18px rgba(255,77,0,0.18); transform: scale(1); }
+    }
+
+    /* footer small note */
+    .note { margin-top: 14px; font-size: 13px; color: #9fbefb; opacity: 0.85; }
+  </style>
 </head>
 <body>
+  <div class="wrap">
+    <div class="card" role="main" aria-labelledby="title">
+      <h1 id="title">TONTON IKLAN</h1>
+      <p class="sub">Mohon tonton sampai selesai🙏🏻</p>
 
-<div id="container">
-  <div class="loader"></div>
-  <div class="text">Memuat Iklan...</div>
-</div>
+      <button id="watchBtn" class="btn" type="button" aria-live="polite" >
+        <span id="btnContent">TONTON IKLAN</span>
+      </button>
 
-<script>
-  const tg = window.Telegram.WebApp;
-  tg.expand();
-  tg.disableVerticalSwipes(); // lock full screen
+      <div id="status" class="status" aria-atomic="true"></div>
+      <div class="note">Iklan dipasang melalui AdsGram • blockId = <strong>int-16643</strong></div>
+    </div>
+  </div>
 
-  const AdController = window.Adsgram.init({
-    blockId: "int-16643"
-  });
+  <script>
+    (function () {
+      // Block ID yang diberikan: "int-16643"
+      const BLOCK_ID = "int-16643";
 
-  // Delay sedikit agar animasi muncul
-  setTimeout(() => {
-    AdController.show()
-      .then(() => {
-        tg.close(); // ✅ langsung kembali ke bot
-      })
-      .catch(() => {
-        // gagal / user skip → tetap close (anti skip ke bot)
-        tg.close();
-      });
-  }, 800);
-</script>
+      // Elemen
+      const watchBtn = document.getElementById('watchBtn');
+      const btnContent = document.getElementById('btnContent');
+      const statusEl = document.getElementById('status');
 
+      // state
+      let AdController = null;
+      let initDone = false;
+
+      function setStatus(text, subtle) {
+        statusEl.textContent = text;
+        statusEl.style.opacity = subtle ? '0.85' : '1';
+      }
+
+      function setButtonLoading(loading) {
+        if (loading) {
+          watchBtn.setAttribute('disabled', 'disabled');
+          btnContent.innerHTML = '<span class="spinner" aria-hidden="true"></span> Memuat iklan...';
+          watchBtn.classList.add('pulse');
+        } else {
+          watchBtn.removeAttribute('disabled');
+          btnContent.textContent = 'TONTON IKLAN';
+          watchBtn.classList.remove('pulse');
+        }
+      }
+
+      // Inisialisasi AdsGram (diperlukan untuk Rewarded/Interstitial)
+      function initAdsGram() {
+        if (initDone) return Promise.resolve();
+        setStatus('Menginisialisasi AdsGram…', true);
+
+        return new Promise((resolve, reject) => {
+          try {
+            if (!window.Adsgram || typeof window.Adsgram.init !== 'function') {
+              reject(new Error('SDK AdsGram belum tersedia. Pastikan koneksi internet dan URL SDK benar.'));
+              return;
+            }
+            // init mengembalikan controller
+            AdController = window.Adsgram.init({ blockId: BLOCK_ID });
+            initDone = true;
+            setStatus('Siap memutar iklan. Tekan tombol lagi untuk memulai.', true);
+            resolve();
+          } catch (err) {
+            reject(err);
+          }
+        });
+      }
+
+      // Fungsi utama: tampilkan iklan saat tombol ditekan
+      async function showAdHandler() {
+        try {
+          setButtonLoading(true);
+          setStatus('Menyiapkan iklan…', true);
+
+          // Pastikan inisialisasi
+          await initAdsGram();
+
+          if (!AdController || typeof AdController.show !== 'function') {
+            throw new Error('AdController tidak tersedia atau tidak mendukung .show()');
+          }
+
+          setStatus('Memulai iklan… Silakan tonton sampai selesai.', false);
+
+          // Tampilkan iklan. AdController.show() mengembalikan Promise.
+          AdController.show()
+            .then((result) => {
+              // Hasil: { done: boolean, description: string, state: 'load'|'render'|'playing'|'destroy', error: boolean }
+              if (result && result.done) {
+                setStatus('Terima kasih! Anda telah menonton iklan sampai selesai. Hadiah dapat diberikan sekarang.', false);
+              } else {
+                // Untuk interstitial, close juga sering dianggap done tergantung implementasi; tetap cek flag
+                setStatus('Iklan selesai/ditutup. Jika Anda perlu reward hanya untuk iklan yang tuntas, cek `result.done` pada server Anda.', true);
+              }
+            })
+            .catch((errResult) => {
+              // Rejected jika error atau user menutup sebelum selesai (tergantung format)
+              // errResult bisa berupa object / error
+              console.error('AdController.show error:', errResult);
+              let msg = 'Terjadi kesalahan saat memutar iklan.';
+              if (errResult && errResult.description) msg += ' ' + errResult.description;
+              setStatus(msg, false);
+            })
+            .finally(() => {
+              setButtonLoading(false);
+            });
+
+        } catch (err) {
+          console.error('init/show error:', err);
+          setStatus('Gagal memuat iklan: ' + (err.message || err), false);
+          setButtonLoading(false);
+        }
+      }
+
+      // Event handler
+      watchBtn.addEventListener('click', showAdHandler, false);
+
+      // Optional: inisialisasi awal otomatis (bisa di-comment jika tidak mau auto-init)
+      // initAdsGram().catch(()=> {
+      //   // jangan tampilkan error otomatis, biarkan saat user klik
+      // });
+    })();
+  </script>
 </body>
 </html>
